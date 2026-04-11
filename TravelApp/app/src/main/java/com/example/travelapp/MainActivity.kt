@@ -1,10 +1,11 @@
-package com.example.travelleapp
-
+package com.example.travelapp
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.material3.OutlinedTextFieldDefaults.colors
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -13,11 +14,10 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
@@ -30,15 +30,16 @@ import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -47,71 +48,81 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-class ConverterHomeActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme {
-                JourneyConverterScreen()
+                ModernTravelCompanionApp()
             }
         }
     }
 }
 
-private enum class ConversionGroup {
-    MONEY,
-    TRAVEL_MEASURES,
-    HEAT
-}
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun JourneyConverterScreen() {
-    val appContext = LocalContext.current
+fun ModernTravelCompanionApp() {
+    val context = LocalContext.current
 
-    val groupLabels = mapOf(
-        ConversionGroup.MONEY to "Currency",
-        ConversionGroup.TRAVEL_MEASURES to "Fuel / Distance / Liquid",
-        ConversionGroup.HEAT to "Temperature"
+    val categories = listOf(
+        "Currency",
+        "Fuel / Distance / Liquid",
+        "Temperature"
     )
 
-    val moneyOptions = listOf("USD", "AUD", "EUR", "JPY", "GBP")
-    val travelOptions = listOf("mpg", "km/L", "Gallon (US)", "Liters", "Nautical Mile", "Kilometers")
-    val heatOptions = listOf("Celsius", "Fahrenheit", "Kelvin")
+    val currencyUnits = listOf("USD", "AUD", "EUR", "JPY", "GBP")
+    val fuelUnits = listOf("mpg", "km/L", "Gallon (US)", "Liters", "Nautical Mile", "Kilometers")
+    val temperatureUnits = listOf("Celsius", "Fahrenheit", "Kelvin")
 
-    var activeGroup by remember { mutableStateOf(ConversionGroup.MONEY) }
-    var sourceUnit by remember { mutableStateOf(moneyOptions.first()) }
-    var targetUnit by remember { mutableStateOf(moneyOptions[1]) }
-    var rawInput by remember { mutableStateOf("") }
-    var conversionMessage by remember { mutableStateOf("Converted value will be shown here") }
+    var selectedCategory by remember { mutableStateOf(categories[0]) }
+    var selectedFromUnit by remember { mutableStateOf(currencyUnits[0]) }
+    var selectedToUnit by remember { mutableStateOf(currencyUnits[1]) }
+    var inputValue by remember { mutableStateOf("") }
+    var resultText by remember { mutableStateOf("Converted value will appear here") }
 
-    val visibleUnits = when (activeGroup) {
-        ConversionGroup.MONEY -> moneyOptions
-        ConversionGroup.TRAVEL_MEASURES -> travelOptions
-        ConversionGroup.HEAT -> heatOptions
+    val currentUnits = when (selectedCategory) {
+        "Currency" -> currencyUnits
+        "Fuel / Distance / Liquid" -> fuelUnits
+        "Temperature" -> temperatureUnits
+        else -> currencyUnits
     }
 
-    LaunchedEffect(activeGroup) {
-        sourceUnit = visibleUnits.first()
-        targetUnit = visibleUnits.getOrElse(1) { visibleUnits.first() }
-        rawInput = ""
-        conversionMessage = "Converted value will be shown here"
+    LaunchedEffect(selectedCategory) {
+        selectedFromUnit = currentUnits.first()
+        selectedToUnit = if (currentUnits.size > 1) currentUnits[1] else currentUnits.first()
+        inputValue = ""
+        resultText = "Converted value will appear here"
     }
 
-    val accent = Color(0xFF009688)
-
-    val pageBrush = Brush.verticalGradient(
+    val backgroundBrush = Brush.verticalGradient(
         colors = listOf(
-            Color(0xFFF7F3FF),
-            Color(0xFFF2F8FF),
-            Color(0xFFFFFAF4)
+            Color(0xFFF5F7FF),
+            Color(0xFFEAF4FF),
+            Color(0xFFFDFBFF)
         )
     )
 
-    Surface(modifier = Modifier.fillMaxSize()) {
+    val accentColor = when (selectedCategory) {
+        "Currency" -> Color(0xFF3F51B5)
+        "Fuel / Distance / Liquid" -> Color(0xFF00897B)
+        "Temperature" -> Color(0xFFE65100)
+        else -> Color(0xFF3F51B5)
+    }
+
+    val categoryIcon = when (selectedCategory) {
+        "Currency" -> "💱"
+        "Fuel / Distance / Liquid" -> "⛽"
+        "Temperature" -> "🌡️"
+        else -> "✈️"
+    }
+
+    Surface(
+        modifier = Modifier.fillMaxSize()
+    ) {
         Box(
             modifier = Modifier
                 .fillMaxSize()
-                .background(pageBrush)
+                .background(backgroundBrush)
         ) {
             Column(
                 modifier = Modifier
@@ -119,288 +130,287 @@ fun JourneyConverterScreen() {
                     .statusBarsPadding()
                     .navigationBarsPadding()
                     .verticalScroll(rememberScrollState())
-                    .padding(horizontal = 20.dp, vertical = 18.dp),
+                    .padding(horizontal = 18.dp, vertical = 16.dp),
                 verticalArrangement = Arrangement.Top
             ) {
-                TopBanner(accentColor = accent)
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White.copy(alpha = 0.92f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(22.dp)
+                    ) {
+                        Text(
+                            text = "$categoryIcon Travel Companion",
+                            fontSize = 28.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1C1C1C)
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = "Smart travel conversions for international travellers",
+                            fontSize = 15.sp,
+                            color = Color(0xFF5F6368)
+                        )
+
+                        Spacer(modifier = Modifier.height(14.dp))
+
+                        Box(
+                            modifier = Modifier
+                                .background(
+                                    color = accentColor.copy(alpha = 0.12f),
+                                    shape = RoundedCornerShape(16.dp)
+                                )
+                                .padding(horizontal = 14.dp, vertical = 8.dp)
+                        ) {
+                            Text(
+                                text = "Current category: $selectedCategory",
+                                color = accentColor,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                InputSection(
-                    groupNames = groupLabels,
-                    currentGroup = activeGroup,
-                    availableUnits = visibleUnits,
-                    fromUnit = sourceUnit,
-                    toUnit = targetUnit,
-                    inputText = rawInput,
-                    accentColor = accent,
-                    onGroupChange = { activeGroup = it },
-                    onFromUnitChange = { sourceUnit = it },
-                    onToUnitChange = { targetUnit = it },
-                    onInputChange = { rawInput = it },
-                    onConvertClicked = {
-                        conversionMessage = performConversion(
-                            context = appContext,
-                            category = groupLabels[activeGroup] ?: "Currency",
-                            fromUnit = sourceUnit,
-                            toUnit = targetUnit,
-                            typedValue = rawInput,
-                            onError = { Toast.makeText(appContext, it, Toast.LENGTH_SHORT).show() }
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 10.dp)
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        SectionLabel("Choose category")
+                        ModernDropdownSelector(
+                            options = categories,
+                            selectedOption = selectedCategory,
+                            onOptionSelected = { selectedCategory = it },
+                            accentColor = accentColor
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SectionLabel("Convert from")
+                        ModernDropdownSelector(
+                            options = currentUnits,
+                            selectedOption = selectedFromUnit,
+                            onOptionSelected = { selectedFromUnit = it },
+                            accentColor = accentColor
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SectionLabel("Convert to")
+                        ModernDropdownSelector(
+                            options = currentUnits,
+                            selectedOption = selectedToUnit,
+                            onOptionSelected = { selectedToUnit = it },
+                            accentColor = accentColor
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        SectionLabel("Enter value")
+                        OutlinedTextField(
+                            value = inputValue,
+                            onValueChange = { inputValue = it },
+                            modifier = Modifier.fillMaxWidth(),
+                            singleLine = true,
+                            label = { Text("Type value here") },
+                            shape = RoundedCornerShape(18.dp),
+                        )
+
+                        Spacer(modifier = Modifier.height(22.dp))
+
+                        Button(
+                            onClick = {
+                                val trimmedInput = inputValue.trim()
+
+                                if (trimmedInput.isEmpty()) {
+                                    Toast.makeText(context, "Please enter a value", Toast.LENGTH_SHORT).show()
+                                    resultText = "Error: Input cannot be empty"
+                                    return@Button
+                                }
+
+                                val numericValue = trimmedInput.toDoubleOrNull()
+                                if (numericValue == null) {
+                                    Toast.makeText(context, "Please enter a valid numeric value", Toast.LENGTH_SHORT).show()
+                                    resultText = "Error: Non-numeric input is not allowed"
+                                    return@Button
+                                }
+
+                                if (selectedFromUnit == selectedToUnit) {
+                                    Toast.makeText(context, "Source and destination are the same", Toast.LENGTH_SHORT).show()
+                                    resultText = "Result: %.2f %s".format(numericValue, selectedToUnit)
+                                    return@Button
+                                }
+
+                                if ((selectedCategory == "Currency" || selectedCategory == "Fuel / Distance / Liquid") && numericValue < 0) {
+                                    Toast.makeText(context, "Negative values are not allowed for this category", Toast.LENGTH_SHORT).show()
+                                    resultText = "Error: Negative value is invalid for $selectedCategory"
+                                    return@Button
+                                }
+
+                                val result = when (selectedCategory) {
+                                    "Currency" -> convertCurrency(selectedFromUnit, selectedToUnit, numericValue)
+                                    "Fuel / Distance / Liquid" -> convertFuelDistanceLiquid(selectedFromUnit, selectedToUnit, numericValue)
+                                    "Temperature" -> convertTemperature(selectedFromUnit, selectedToUnit, numericValue)
+                                    else -> null
+                                }
+
+                                if (result == null) {
+                                    Toast.makeText(context, "This conversion is not supported", Toast.LENGTH_SHORT).show()
+                                    resultText = "Error: Conversion not supported"
+                                } else {
+                                    resultText = "Result: %.2f %s".format(result, selectedToUnit)
+                                }
+                            },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(56.dp),
+                            shape = RoundedCornerShape(18.dp),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = accentColor,
+                                contentColor = Color.White
+                            ),
+                            contentPadding = PaddingValues(vertical = 12.dp)
+                        ) {
+                            Text(
+                                text = "Convert Now",
+                                fontSize = 17.sp,
+                                fontWeight = FontWeight.Bold
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(18.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(28.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = accentColor.copy(alpha = 0.10f)
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
+                    border = androidx.compose.foundation.BorderStroke(
+                        width = 1.dp,
+                        color = accentColor.copy(alpha = 0.25f)
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(20.dp)
+                    ) {
+                        Text(
+                            text = "Conversion Result",
+                            fontSize = 14.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = accentColor
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Text(
+                            text = resultText,
+                            fontSize = 22.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color(0xFF1A1A1A)
                         )
                     }
-                )
+                }
 
                 Spacer(modifier = Modifier.height(18.dp))
 
-                ResultSection(
-                    accentColor = accent,
-                    message = conversionMessage
-                )
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(24.dp),
+                    colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.92f)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                ) {
+                    Column(modifier = Modifier.padding(18.dp)) {
+                        Text(
+                            text = "Quick Tips",
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp,
+                            color = Color(0xFF1C1C1C)
+                        )
 
-                Spacer(modifier = Modifier.height(16.dp))
+                        Spacer(modifier = Modifier.height(8.dp))
 
-                InfoSection()
-            }
-        }
-    }
-}
-
-@Composable
-private fun TopBanner(accentColor: Color) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(
-            topStart = 14.dp,
-            topEnd = 30.dp,
-            bottomStart = 30.dp,
-            bottomEnd = 14.dp
-        ),
-        colors = CardDefaults.cardColors(containerColor = accentColor),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = "Journey Converter",
-                color = Color.White,
-                fontWeight = FontWeight.Bold,
-                fontSize = 26.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "Convert travel-related values quickly and clearly",
-                color = Color.White.copy(alpha = 0.92f),
-                fontSize = 14.sp
-            )
-        }
-    }
-}
-
-@Composable
-private fun InputSection(
-    groupNames: Map<ConversionGroup, String>,
-    currentGroup: ConversionGroup,
-    availableUnits: List<String>,
-    fromUnit: String,
-    toUnit: String,
-    inputText: String,
-    accentColor: Color,
-    onGroupChange: (ConversionGroup) -> Unit,
-    onFromUnitChange: (String) -> Unit,
-    onToUnitChange: (String) -> Unit,
-    onInputChange: (String) -> Unit,
-    onConvertClicked: () -> Unit
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(24.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White),
-        elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
-    ) {
-        Column(modifier = Modifier.padding(18.dp)) {
-            LabelText("Category")
-            SimpleDropdown(
-                items = groupNames.values.toList(),
-                selectedItem = groupNames[currentGroup] ?: "Currency",
-                accentColor = accentColor,
-                onItemSelected = { selectedLabel ->
-                    val chosenGroup = groupNames.entries.firstOrNull { it.value == selectedLabel }?.key
-                    if (chosenGroup != null) onGroupChange(chosenGroup)
+                        Text(
+                            text = "• Currency and fuel values cannot be negative\n" +
+                                    "• Same-unit conversion returns the same value\n" +
+                                    "• Unsupported conversions show an error safely",
+                            fontSize = 14.sp,
+                            color = Color(0xFF5F6368),
+                            lineHeight = 22.sp
+                        )
+                    }
                 }
-            )
 
-            Spacer(modifier = Modifier.height(14.dp))
-
-            LabelText("Convert From")
-            SimpleDropdown(
-                items = availableUnits,
-                selectedItem = fromUnit,
-                accentColor = accentColor,
-                onItemSelected = onFromUnitChange
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            LabelText("Convert To")
-            SimpleDropdown(
-                items = availableUnits,
-                selectedItem = toUnit,
-                accentColor = accentColor,
-                onItemSelected = onToUnitChange
-            )
-
-            Spacer(modifier = Modifier.height(14.dp))
-
-            LabelText("Input")
-            OutlinedTextField(
-                value = inputText,
-                onValueChange = onInputChange,
-                modifier = Modifier.fillMaxWidth(),
-                singleLine = true,
-                label = { Text("Enter numeric value") },
-                shape = RoundedCornerShape(20.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = accentColor,
-                    unfocusedBorderColor = Color(0xFFD3D3D3),
-                    cursorColor = accentColor,
-                    focusedLabelColor = accentColor,
-                    focusedContainerColor = Color.White,
-                    unfocusedContainerColor = Color.White
-                )
-            )
-
-            Spacer(modifier = Modifier.height(20.dp))
-
-            Button(
-                onClick = onConvertClicked,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(54.dp),
-                shape = CircleShape,
-                colors = ButtonDefaults.buttonColors(
-                    containerColor = accentColor,
-                    contentColor = Color.White
-                ),
-                contentPadding = PaddingValues(vertical = 10.dp)
-            ) {
-                Text(
-                    text = "Convert Now",
-                    fontWeight = FontWeight.Bold,
-                    fontSize = 16.sp
-                )
+                Spacer(modifier = Modifier.height(20.dp))
             }
         }
     }
 }
 
 @Composable
-private fun ResultSection(
-    accentColor: Color,
-    message: String
-) {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(28.dp),
-        colors = CardDefaults.cardColors(
-            containerColor = accentColor.copy(alpha = 0.12f)
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
-    ) {
-        Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                text = "Result",
-                color = accentColor,
-                fontWeight = FontWeight.SemiBold,
-                fontSize = 14.sp
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = message,
-                fontSize = 24.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF1E1E1E)
-            )
-        }
-    }
-}
-
-@Composable
-private fun InfoSection() {
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = Color.White.copy(alpha = 0.96f))
-    ) {
-        Column(modifier = Modifier.padding(16.dp)) {
-            Text(
-                text = "About This App",
-                fontWeight = FontWeight.Bold,
-                fontSize = 15.sp
-            )
-            Spacer(modifier = Modifier.height(6.dp))
-            Text(
-                text = "This converter supports common travel calculations such as currency exchange, fuel and distance conversions, liquid volume conversion, and temperature conversion.",
-                fontSize = 13.sp,
-                color = Color(0xFF585858)
-            )
-        }
-    }
-}
-
-@Composable
-private fun LabelText(title: String) {
+fun SectionLabel(text: String) {
     Text(
-        text = title,
-        fontWeight = FontWeight.SemiBold,
+        text = text,
         fontSize = 14.sp,
-        color = Color(0xFF4C4C4C),
-        modifier = Modifier.padding(bottom = 6.dp)
+        fontWeight = FontWeight.SemiBold,
+        color = Color(0xFF4B5563),
+        modifier = Modifier.padding(bottom = 8.dp)
     )
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun SimpleDropdown(
-    items: List<String>,
-    selectedItem: String,
-    accentColor: Color,
-    onItemSelected: (String) -> Unit
+fun ModernDropdownSelector(
+    options: List<String>,
+    selectedOption: String,
+    onOptionSelected: (String) -> Unit,
+    accentColor: Color
 ) {
-    var isExpanded by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
-        expanded = isExpanded,
-        onExpandedChange = { isExpanded = !isExpanded }
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
     ) {
         OutlinedTextField(
-            value = selectedItem,
+            value = selectedOption,
             onValueChange = {},
             readOnly = true,
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(),
-            shape = RoundedCornerShape(20.dp),
+            shape = RoundedCornerShape(18.dp),
             trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = isExpanded)
-            },
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = accentColor,
-                unfocusedBorderColor = Color(0xFFD3D3D3),
-                focusedContainerColor = Color.White,
-                unfocusedContainerColor = Color.White,
-                cursorColor = accentColor
-            )
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            }
         )
 
         ExposedDropdownMenu(
-            expanded = isExpanded,
-            onDismissRequest = { isExpanded = false }
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
         ) {
-            items.forEach { item ->
+            options.forEach { item ->
                 DropdownMenuItem(
                     text = { Text(item) },
                     onClick = {
-                        onItemSelected(item)
-                        isExpanded = false
+                        onOptionSelected(item)
+                        expanded = false
                     }
                 )
             }
@@ -408,92 +418,46 @@ private fun SimpleDropdown(
     }
 }
 
-private fun performConversion(
-    context: android.content.Context,
-    category: String,
-    fromUnit: String,
-    toUnit: String,
-    typedValue: String,
-    onError: (String) -> Unit
-): String {
-    val cleanedInput = typedValue.trim()
-
-    if (cleanedInput.isEmpty()) {
-        onError("Please enter a value")
-        return "Error: input is empty"
-    }
-
-    val amount = cleanedInput.toDoubleOrNull()
-    if (amount == null) {
-        onError("Please enter a valid number")
-        return "Error: invalid numeric input"
-    }
-
-    if (fromUnit == toUnit) {
-        onError("Both units are the same")
-        return "Converted Value: %.2f %s".format(amount, toUnit)
-    }
-
-    if ((category == "Currency" || category == "Fuel / Distance / Liquid") && amount < 0) {
-        onError("Negative values are not allowed here")
-        return "Error: negative values are not valid for $category"
-    }
-
-    val output = when (category) {
-        "Currency" -> exchangeCurrency(fromUnit, toUnit, amount)
-        "Fuel / Distance / Liquid" -> convertTravelMeasure(fromUnit, toUnit, amount)
-        "Temperature" -> convertHeatValue(fromUnit, toUnit, amount)
-        else -> null
-    }
-
-    return if (output == null) {
-        Toast.makeText(context, "Conversion not supported", Toast.LENGTH_SHORT).show()
-        "Error: unsupported conversion"
-    } else {
-        "Converted Value: %.2f %s".format(output, toUnit)
-    }
-}
-
-private fun exchangeCurrency(from: String, to: String, amount: Double): Double {
-    val baseUsd = when (from) {
-        "USD" -> amount
-        "AUD" -> amount / 1.55
-        "EUR" -> amount / 0.92
-        "JPY" -> amount / 148.50
-        "GBP" -> amount / 0.78
-        else -> amount
+fun convertCurrency(from: String, to: String, value: Double): Double {
+    val usdValue = when (from) {
+        "USD" -> value
+        "AUD" -> value / 1.55
+        "EUR" -> value / 0.92
+        "JPY" -> value / 148.50
+        "GBP" -> value / 0.78
+        else -> value
     }
 
     return when (to) {
-        "USD" -> baseUsd
-        "AUD" -> baseUsd * 1.55
-        "EUR" -> baseUsd * 0.92
-        "JPY" -> baseUsd * 148.50
-        "GBP" -> baseUsd * 0.78
-        else -> baseUsd
+        "USD" -> usdValue
+        "AUD" -> usdValue * 1.55
+        "EUR" -> usdValue * 0.92
+        "JPY" -> usdValue * 148.50
+        "GBP" -> usdValue * 0.78
+        else -> usdValue
     }
 }
 
-private fun convertTravelMeasure(from: String, to: String, amount: Double): Double? {
+fun convertFuelDistanceLiquid(from: String, to: String, value: Double): Double? {
     return when {
-        from == "mpg" && to == "km/L" -> amount * 0.425
-        from == "km/L" && to == "mpg" -> amount / 0.425
-        from == "Gallon (US)" && to == "Liters" -> amount * 3.785
-        from == "Liters" && to == "Gallon (US)" -> amount / 3.785
-        from == "Nautical Mile" && to == "Kilometers" -> amount * 1.852
-        from == "Kilometers" && to == "Nautical Mile" -> amount / 1.852
+        from == "mpg" && to == "km/L" -> value * 0.425
+        from == "km/L" && to == "mpg" -> value / 0.425
+        from == "Gallon (US)" && to == "Liters" -> value * 3.785
+        from == "Liters" && to == "Gallon (US)" -> value / 3.785
+        from == "Nautical Mile" && to == "Kilometers" -> value * 1.852
+        from == "Kilometers" && to == "Nautical Mile" -> value / 1.852
         else -> null
     }
 }
 
-private fun convertHeatValue(from: String, to: String, amount: Double): Double? {
+fun convertTemperature(from: String, to: String, value: Double): Double? {
     return when {
-        from == "Celsius" && to == "Fahrenheit" -> (amount * 1.8) + 32
-        from == "Fahrenheit" && to == "Celsius" -> (amount - 32) / 1.8
-        from == "Celsius" && to == "Kelvin" -> amount + 273.15
-        from == "Kelvin" && to == "Celsius" -> amount - 273.15
-        from == "Fahrenheit" && to == "Kelvin" -> ((amount - 32) / 1.8) + 273.15
-        from == "Kelvin" && to == "Fahrenheit" -> ((amount - 273.15) * 1.8) + 32
+        from == "Celsius" && to == "Fahrenheit" -> (value * 1.8) + 32
+        from == "Fahrenheit" && to == "Celsius" -> (value - 32) / 1.8
+        from == "Celsius" && to == "Kelvin" -> value + 273.15
+        from == "Kelvin" && to == "Celsius" -> value - 273.15
+        from == "Fahrenheit" && to == "Kelvin" -> ((value - 32) / 1.8) + 273.15
+        from == "Kelvin" && to == "Fahrenheit" -> ((value - 273.15) * 1.8) + 32
         else -> null
     }
 }
